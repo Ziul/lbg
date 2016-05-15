@@ -49,3 +49,10 @@ _parser.add_option("-t", "--text",
                    type='string',
                    help="text to be encoded",
                    )
+
+_parser.add_option("--error",
+                   dest="error",
+                   type='long',
+                   default=1e-5,
+                   help="Error",
+                   )

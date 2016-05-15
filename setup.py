@@ -7,6 +7,7 @@ A file compactor
 """
 from setuptools import setup, find_packages
 
+# http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz
 install_requires = [
     'bitarray>=0.8.1',
     'ipdb>=0.9.0',
@@ -26,7 +27,7 @@ setup(
     entry_points={
         'console_scripts': [
             'lbg = lbg:main',
-            # 'main-test = main:test',
+            'lbg-rgb = lbg:test',
         ]},
     description='A program to compact/descompact a file',
     long_description=__doc__,
