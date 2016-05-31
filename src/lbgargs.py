@@ -56,3 +56,10 @@ _parser.add_option("--error",
                    default=1e-5,
                    help="Error",
                    )
+
+_parser.add_option("-c", "--compress",
+                   dest="compress",
+                   type='long',
+                   default=1 / 2,
+                   help="Compress value",
+                   )

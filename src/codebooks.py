@@ -6,12 +6,13 @@ Heuristic process that can be used to generate cluster points from a big amount 
 import math
 from functools import reduce
 from collections import defaultdict
+import numpy as np
 
 _size_data = 0
 _dim = 0
 
 
-def generate_codebook(data, size_codebook, epsilon=0.00001):
+def generate_codebook(data, size_codebook, epsilon=0.01):
     """
     Generate codebook of size <size_codebook> with convergence value <epsilon>. Will return a tuple with the
     generated codebook, a vector with absolute weights and a vector with relative weights (the weight denotes how many
@@ -46,7 +47,7 @@ def generate_codebook(data, size_codebook, epsilon=0.00001):
         codebook, codebook_abs_weights, codebook_rel_weights, avg_dist = split_codebook(data, codebook,
                                                                                         epsilon, avg_dist)
 
-    return codebook, codebook_abs_weights, codebook_rel_weights
+    return np.array(codebook), codebook_abs_weights, codebook_rel_weights
 
 
 def split_codebook(data, codebook, epsilon, initial_avg_dist):
@@ -62,7 +63,8 @@ def split_codebook(data, codebook, epsilon, initial_avg_dist):
     # split codevectors
     new_codevectors = []
     for c in codebook:
-        # the new codevectors c1 and c2 will moved by epsilon and -epsilon so to be apart from each other
+        # the new codevectors c1 and c2 will moved by epsilon and -epsilon so
+        # to be apart from each other
         c1 = new_codevector(c, epsilon)
         c2 = new_codevector(c, -epsilon)
         new_codevectors.extend((c1, c2))
@@ -80,10 +82,14 @@ def split_codebook(data, codebook, epsilon, initial_avg_dist):
     err = epsilon + 1
     num_iter = 0
     while err > epsilon:
-        # find closest codevectors for each vector in data (find the proximity of each codevector)
-        closest_c_list = [None] * _size_data    # list that contains the nearest codevector for each input data vector
-        vecs_near_c = defaultdict(list)         # list with codevector index -> input data vector mapping
-        vec_idxs_near_c = defaultdict(list)     # list with codevector index -> input data index mapping
+        # find closest codevectors for each vector in data (find the proximity
+        # of each codevector)
+        # list that contains the nearest codevector for each input data vector
+        closest_c_list = [None] * _size_data
+        # list with codevector index -> input data vector mapping
+        vecs_near_c = defaultdict(list)
+        # list with codevector index -> input data index mapping
+        vec_idxs_near_c = defaultdict(list)
         for i, vec in enumerate(data):  # for each input vector
             min_dist = None
             closest_c_index = None
@@ -96,14 +102,18 @@ def split_codebook(data, codebook, epsilon, initial_avg_dist):
             vecs_near_c[closest_c_index].append(vec)
             vec_idxs_near_c[closest_c_index].append(i)
 
-        # update codebook: recalculate each codevector so that it sits in the center of the points in their proximity
-        for i_c in range(len_codebook): # for each codevector index
-            vecs = vecs_near_c.get(i_c) or []   # get its proximity input vectors
+        # update codebook: recalculate each codevector so that it sits in the
+        # center of the points in their proximity
+        for i_c in range(len_codebook):  # for each codevector index
+            # get its proximity input vectors
+            vecs = vecs_near_c.get(i_c) or []
             num_vecs_near_c = len(vecs)
             if num_vecs_near_c > 0:
-                new_c = avg_vec_of_vecs(vecs, _dim)     # calculate the new center
+                # calculate the new center
+                new_c = avg_vec_of_vecs(vecs, _dim)
                 codebook[i_c] = new_c                   # update in codebook
-                for i in vec_idxs_near_c[i_c]:          # update in input vector index -> codevector mapping list
+                # update in input vector index -> codevector mapping list
+                for i in vec_idxs_near_c[i_c]:
                     closest_c_list[i] = new_c
 
                 # update the weights
