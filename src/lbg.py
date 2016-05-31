@@ -15,15 +15,8 @@ _MAX_THREADS = 10
 _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
 
-import concurrent.futures
 
 
-def print(*data, end='\n'):
-    # overwrite print
-    if _options.verbose:
-        for i in data:
-            stdout.write(str(i) + ' ')
-        stdout.write(end)
 
 
 class LBG(object):
@@ -111,7 +104,7 @@ class LBG(object):
             red = np.append(red, _pool.map(self.convulate, reds))
         red = red.flatten()
         self.windows.add_subplot(1, 2, 2)
-        plt.hist(red)
+        plt.hist(red, bins= range(255))
 
         print(len(red))
         red.shape = (self.figure.shape[0], 3)
@@ -122,8 +115,10 @@ class LBG(object):
         with plt.xkcd():
 
             # plt.imshow(self.figure)
-            # cv2.imshow('olar', np.array(
-            #     [red, green, blue], dtype=self.figure.dtype).T)
+            recover = np.array(
+                 [red, green, blue] ).T
+            print recover.shape
+            # plt.hist(recover)
             # plt.show()
             plt.show()
         # print(LBG.avg(new_red))
