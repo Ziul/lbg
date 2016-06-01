@@ -25,6 +25,8 @@ class LBG(object):
         self.filename = filename
         # self.figure = plt.imread(filename)
         self.figure = cv2.imread(filename, 0)
+        if self.figure is None:
+            raise Exception('Figure not found')
         self.windows = plt.figure()
         self.codebooks = []
 
@@ -100,7 +102,6 @@ class LBG(object):
         if (old == new).all():
             print('CRITICO!')
             return 0
-        print(np.abs(new - old).max())
         return np.abs(new - old).max()
 
     def generate_centroids(self, tax=0.5):
@@ -114,10 +115,8 @@ class LBG(object):
         old = np.zeros(unique_size)
         centroids = np.mean(values, axis=1)
         while self.is_avg_equal(old, values) > self.epsilon:
-            print('looking for')
             old = centroids.copy()
             values = np.split(np.concatenate(values), np.mean(values, axis=1))
-            print(values)
             centroids = np.mean(values)
         self.codebooks = np.round(centroids)
         print('{} >> {}'.format(unique_size, len(centroids)))
@@ -138,21 +137,19 @@ def main():
     figure = LBG(_options.filename)
     compressed_figure = figure.compress()
 
-    # with plt.style.context(('seaborn-pastel')):
-    with plt.xkcd():
-            # plt.title('Quantization of {}'.format(_options.filename))
+    # with plt.xkcd():
+    with plt.style.context(('seaborn-pastel')):
         figure.windows.add_subplot(2, 2, 1)
         plt.title('Original')
         plt.imshow(figure.figure, cmap='Greys_r')
-        plt.colorbar()
+        # plt.colorbar()
         figure.windows.add_subplot(2, 2, 3)
         plt.title('Histograma da original')
         plt.hist(figure.figure.flatten(), bins=range(0, 255, 5))
-        print(figure.codebooks)
         figure.windows.add_subplot(2, 2, 2)
         plt.title('Quantizada')
         plt.imshow(compressed_figure, cmap='Greys_r')
-        plt.colorbar()
+        # plt.colorbar()
         figure.windows.add_subplot(2, 2, 4)
         plt.title('Histograma da quantizada')
         plt.hist(compressed_figure.flatten(), bins=range(
