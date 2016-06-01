@@ -26,6 +26,7 @@ class LBG(object):
         # self.figure = plt.imread(filename)
         self.figure = cv2.imread(filename, 0)
         self.windows = plt.figure()
+        self.codebooks = []
 
     @staticmethod
     def combinations(data):
@@ -55,19 +56,40 @@ class LBG(object):
         global rgb_spectrum
         return np.array(compute(rgb_spectrum, i)[0])
 
-    # @staticmethod
-    def convulate(self, value):
-        codebooks = self.codebooks
+    @staticmethod
+    def external_convulate(figure, codebooks):
         for i in range(len(codebooks) - 1):
-            if codebooks[i] <= value <= codebooks[i + 1]:
-                if (value - codebooks[i]) < (codebooks[i + 1] - value):
-                    return codebooks[i]
-                else:
-                    return codebooks[i + 1]
-        if value < codebooks.min():
-            return codebooks.min()
-        else:
-            return codebooks.max()
+            mask = np.ma.masked_inside(figure, codebooks[i], codebooks[i + 1])
+            figure[mask.mask] = codebooks[i]
+
+        min = np.min(codebooks)
+        max = np.max(codebooks)
+        figure[figure <= min] = min
+        figure[figure >= max] = max
+        return figure
+
+        #     if codebooks[i] <= value <= codebooks[i + 1]:
+        #         if (value - codebooks[i]) < (codebooks[i + 1] - value):
+        #             return codebooks[i]
+        #         else:
+        #             return codebooks[i + 1]
+        # if value < codebooks.min():
+        #     return codebooks.min()
+        # else:
+        #     return codebooks.max()
+
+    @staticmethod
+    def external_compress(figure, codebooks):
+        new_figure = figure.copy()
+        return LBG.external_convulate(new_figure, codebooks)
+
+    def convulate(self, value):
+        return LBG.external_convulate(self.figure, self.codebooks)
+
+    def compress(self):
+        if len(self.codebooks) == 0:
+            self.generate_centroids(_options.compress)
+        return LBG.external_compress(self.figure, self.codebooks)
 
     def is_avg_equal(self, old, new):
         try:
@@ -81,51 +103,26 @@ class LBG(object):
         print(np.abs(new - old).max())
         return np.abs(new - old).max()
 
-    def compress(self, tax):
-        self.windows.add_subplot(2, 2, 1)
-        plt.imshow(self.figure.copy(), cmap='Greys_r')
+    def generate_centroids(self, tax=0.5):
         values = np.concatenate(self.figure.copy())
         values.sort()
         unique_size = len(np.unique(values))
         if tax < 1:
             tax = np.ceil(tax * unique_size)
-        print('{} >> {}'.format(unique_size, tax))
 
         values = np.split(values, tax)
         old = np.zeros(unique_size)
         centroids = np.mean(values, axis=1)
         while self.is_avg_equal(old, values) > self.epsilon:
+            print('looking for')
             old = centroids.copy()
             values = np.split(np.concatenate(values), np.mean(values, axis=1))
-            centroids = LBG.avg(values)
-        self.codebooks = centroids
-        print '{} >> {}'.format(unique_size, len(centroids))
+            print(values)
+            centroids = np.mean(values)
+        self.codebooks = np.round(centroids)
+        print('{} >> {}'.format(unique_size, len(centroids)))
 
-        with plt.xkcd():
-            self.windows.add_subplot(2, 2, 3)
-            plt.hist(self.figure[0], bins=range(255))
-            self.windows.add_subplot(1, 2, 2)
-            plt.hist(centroids, bins=range(255))
-            plt.show()
-
-    def compress_by_reduction(self, tax):
-        red = self.figure[:, 0] * 255
-        green = self.figure[:, 1] * 255
-        blue = self.figure[:, 2] * 255
-        if tax < 1:
-            tax = 1 / tax
-
-        k = np.unique(np.round(red))
-        print(k, '-', len(k))
-        red = compute(red, tax)
-        green = compute(green, tax)[0]
-        blue = compute(blue, tax)[0]
-
-        print(red[0])
-        # k = np.unique(np.round(red))
-        # print(k, '-', len(k))
-
-        # return np.array([red, green, blue], dtype=self.figure.dtype).T
+        return self.codebooks
 
 
 def main():
@@ -139,7 +136,28 @@ def main():
         raise ValueError('Compress tax not informed')
 
     figure = LBG(_options.filename)
-    figure.compress(_options.compress)
+    compressed_figure = figure.compress()
+
+    # with plt.style.context(('seaborn-pastel')):
+    with plt.xkcd():
+            # plt.title('Quantization of {}'.format(_options.filename))
+        figure.windows.add_subplot(2, 2, 1)
+        plt.title('Original')
+        plt.imshow(figure.figure, cmap='Greys_r')
+        plt.colorbar()
+        figure.windows.add_subplot(2, 2, 3)
+        plt.title('Histograma da original')
+        plt.hist(figure.figure.flatten(), bins=range(0, 255, 5))
+        print(figure.codebooks)
+        figure.windows.add_subplot(2, 2, 2)
+        plt.title('Quantizada')
+        plt.imshow(compressed_figure, cmap='Greys_r')
+        plt.colorbar()
+        figure.windows.add_subplot(2, 2, 4)
+        plt.title('Histograma da quantizada')
+        plt.hist(compressed_figure.flatten(), bins=range(
+            0, np.max(compressed_figure) + 10, 5))
+        plt.show()
 
 
 def test():
