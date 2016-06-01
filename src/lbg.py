@@ -148,8 +148,8 @@ def main():
     figure = LBG(_options.filename)
     compressed_figure = figure.compress()
 
-    # with plt.xkcd():
-    with plt.style.context(('seaborn-pastel')):
+    with plt.xkcd():
+        # with plt.style.context(('seaborn-pastel')):
         figure.windows.add_subplot(2, 2, 1)
         plt.title('Original')
         plt.imshow(figure.figure, cmap='Greys_r')
