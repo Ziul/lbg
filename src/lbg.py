@@ -16,9 +16,6 @@ _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
 
 
-
-
-
 class LBG(object):
     """docstring for LBG"""
     epsilon = 1e-3
@@ -27,7 +24,7 @@ class LBG(object):
         super(LBG, self).__init__()
         self.filename = filename
         # self.figure = plt.imread(filename)
-        self.figure = cv2.imread(filename)
+        self.figure = cv2.imread(filename, 0)
         self.windows = plt.figure()
 
     @staticmethod
@@ -73,6 +70,11 @@ class LBG(object):
             return codebooks.max()
 
     def is_avg_equal(self, old, new):
+        try:
+            if old.shape != new.shape:
+                return False
+        except Exception:
+            return False
         if (old == new).all():
             print('CRITICO!')
             return 0
@@ -81,48 +83,30 @@ class LBG(object):
 
     def compress(self, tax):
         self.windows.add_subplot(2, 2, 1)
-        plt.imshow(self.figure.copy())
-        self.windows.add_subplot(2, 2, 3)
-        plt.hist(self.figure[0])
-        print(self.figure.shape)
-        red = (self.figure[::, 0]).flatten()
-        green = (self.figure[::, 1]).flatten()
-        blue = (self.figure[::, 2]).flatten()
+        plt.imshow(self.figure.copy(), cmap='Greys_r')
+        values = np.concatenate(self.figure.copy())
+        values.sort()
+        unique_size = len(np.unique(values))
         if tax < 1:
-            # tax = np.ceil(tax * len(np.unique(red)))
-            tax = np.ceil(tax * len(red))
+            tax = np.ceil(tax * unique_size)
+        print('{} >> {}'.format(unique_size, tax))
 
-        old = np.array([0])
-        new = np.array([1])
-        # while self.is_avg_equal(old, new) > self.epsilon:
-        old = new.copy()
-        new_red = np.array_split(red, tax)
-        self.codebooks = LBG.centroids(new_red)
-        new = self.codebooks.copy()
-        red = np.array([])
-        for reds in new_red:
-            red = np.append(red, _pool.map(self.convulate, reds))
-        red = red.flatten()
-        self.windows.add_subplot(1, 2, 2)
-        plt.hist(red, bins= range(255))
+        values = np.split(values, tax)
+        old = np.zeros(unique_size)
+        centroids = np.mean(values, axis=1)
+        while self.is_avg_equal(old, values) > self.epsilon:
+            old = centroids.copy()
+            values = np.split(np.concatenate(values), np.mean(values, axis=1))
+            centroids = LBG.avg(values)
+        self.codebooks = centroids
+        print '{} >> {}'.format(unique_size, len(centroids))
 
-        print(len(red))
-        red.shape = (self.figure.shape[0], 3)
-        green.shape = (self.figure.shape[0], 3)
-        blue.shape = (self.figure.shape[0], 3)
-        # self.figure[::, 0] = red
-        # print(self.figure)
         with plt.xkcd():
-
-            # plt.imshow(self.figure)
-            recover = np.array(
-                 [red, green, blue] ).T
-            print recover.shape
-            # plt.hist(recover)
-            # plt.show()
+            self.windows.add_subplot(2, 2, 3)
+            plt.hist(self.figure[0], bins=range(255))
+            self.windows.add_subplot(1, 2, 2)
+            plt.hist(centroids, bins=range(255))
             plt.show()
-        # print(LBG.avg(new_red))
-        # print(list(zip(codebooks, new_red)))
 
     def compress_by_reduction(self, tax):
         red = self.figure[:, 0] * 255
