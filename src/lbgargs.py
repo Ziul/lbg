@@ -44,11 +44,6 @@ _parser.add_option("-e", "--encode",
                    default=True
                    )
 
-_parser.add_option("-t", "--text",
-                   dest="text",
-                   type='string',
-                   help="text to be encoded",
-                   )
 
 _parser.add_option("--error",
                    dest="error",

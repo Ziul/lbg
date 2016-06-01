@@ -26,8 +26,9 @@ setup(
     url='https://github.com/Ziul/lbg/',
     entry_points={
         'console_scripts': [
-            'lbg = lbg:main',
-            'lbg-rgb = lbg:test',
+            'lbg = lbg:apply_codebook',
+            'lbg-test = lbg:main',
+            'lbg-learn = lbg:learn',
         ]},
     description='A program to compact/descompact a file',
     long_description=__doc__,
