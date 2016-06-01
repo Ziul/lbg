@@ -200,7 +200,7 @@ def learn():
         except FileNotFound:
             pass
     codebooks = np.round(codebooks)
-    print('\r100.00% ')
+    print('\r100.00% with {} images'.format(len(files)))
     plt.cla()
     with open('codebook.lbg', 'w')as txtfile:
         txtfile.write(json.dumps(list(codebooks), ensure_ascii=False))
