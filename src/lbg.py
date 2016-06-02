@@ -1,3 +1,4 @@
+from __future__ import print_function
 from lbgargs import _parser
 from pprint import pprint
 from sys import argv, stdout
@@ -15,7 +16,7 @@ import cv2
 from codebooks import generate_codebook as compute
 from codebooks import avg_distortion_c0 as avg_distortion
 
-_MAX_THREADS = 1
+_MAX_THREADS = 10
 _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
 
@@ -81,16 +82,6 @@ class LBG(object):
         figure[figure >= max] = max
         return figure
 
-        #     if codebooks[i] <= value <= codebooks[i + 1]:
-        #         if (value - codebooks[i]) < (codebooks[i + 1] - value):
-        #             return codebooks[i]
-        #         else:
-        #             return codebooks[i + 1]
-        # if value < codebooks.min():
-        #     return codebooks.min()
-        # else:
-        #     return codebooks.max()
-
     @staticmethod
     def external_compress(figure, codebooks):
         new_figure = figure.copy()
@@ -110,25 +101,24 @@ class LBG(object):
                 return False
         except Exception:
             return False
-        if (old == new).all():
-            print('CRITICO!')
-            return 0
+
         return np.abs(new - old).max()
 
-    def generate_centroids(self, tax=0.5):
+    def generate_centroids(self, tax=10):
         values = np.concatenate(self.figure.copy())
         values.sort()
         unique_size = len(np.unique(values))
         if tax < 1:
             tax = np.ceil(tax * unique_size)
 
-        values = np.split(values, tax)
+        values = np.array(np.array_split(values, tax))
         old = np.zeros(unique_size)
-        centroids = np.mean(values, axis=1)
-        while self.is_avg_equal(old, values) > self.epsilon:
+        centroids = np.array([np.mean(i) for i in values])
+        while self.is_avg_equal(old, centroids) > self.epsilon:
             old = centroids.copy()
-            values = np.split(np.concatenate(values), np.mean(values, axis=1))
-            centroids = np.mean(values)
+            values = np.array_split(np.concatenate(
+                values), np.mean(values, axis=1))
+            centroids = np.array([np.mean(i) for i in values])
         self.codebooks = np.round(centroids)
         print('{} >> {}'.format(unique_size, len(centroids)))
 

@@ -55,6 +55,6 @@ _parser.add_option("--error",
 _parser.add_option("-c", "--compress",
                    dest="compress",
                    type='float',
-                   default=1 / 2.,
+                   default=10,
                    help="Compress value",
                    )
