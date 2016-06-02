@@ -5,13 +5,14 @@ _parser = optparse.OptionParser(
     usage="""%prog [OPTIONS]
 Examples:
 
-Encode the file abc.txt:
-    ~ $ %prog -f abc.txt -e
-    ~ $ %prog abc.txt
+Build codebooks with some pack of images:
+    lbg-learn <PATH> [FLAGS]
 
-Decode the file abc.txt into `teste.txt`:
-    ~ $ %prog -f abc.txt -d
-    ~ $ %prog -f abc.txt --decode
+Quantize a file using the codebook from the deep learning:
+    lbg <file>
+
+Test a file with a custom quantization:
+    lbg-test <file> [FLAGS]
         """,
     description="Encode/Decode a file using Linde-Buzo-Gray's code",
 )
@@ -29,21 +30,6 @@ _parser.add_option("-f", "--filename",
                    type='string',
                    help="Name of the file",
                    )
-
-_parser.add_option("-d", "--decode",
-                   dest="encode",
-                   action="store_false",
-                   help="decode a file",
-                   default=True
-                   )
-
-_parser.add_option("-e", "--encode",
-                   dest="encode",
-                   action="store_true",
-                   help="encode a file. Is the default value",
-                   default=True
-                   )
-
 
 _parser.add_option("--error",
                    dest="error",

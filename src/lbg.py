@@ -4,6 +4,7 @@ from pprint import pprint
 from sys import argv, stdout
 from glob import glob
 import os
+import sys
 import fnmatch
 import json
 
@@ -21,6 +22,14 @@ _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
 
 
+def print(*args, end='\n'):
+    if not _options.verbose:
+        return
+    for c in args:
+        stdout.write(c)
+    stdout.write(end)
+
+
 class FileNotFound(Exception):
     """docstring for FileNotFound"""
 
@@ -30,7 +39,7 @@ class FileNotFound(Exception):
 
 class LBG(object):
     """docstring for LBG"""
-    epsilon = 1e-3
+    epsilon = _options.error
 
     def __init__(self, filename):
         super(LBG, self).__init__()

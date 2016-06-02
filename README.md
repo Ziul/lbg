@@ -10,18 +10,23 @@ Encode and decode a file using the Linde-Buzo-Gray algorithm
   
 ### Using
 
-Encoding a file:
+Examples:
 
+Build codebooks with some pack of images:
 ```
-    $ lbg <file> [options]
-    $ lbg -t <text> [options]
+    lbg-learn <PATH> [FLAGS]
 ```
 
-Decoding a file:
+Quantize a file using the codebook from the deep learning:
+```
+    lbg <file>
+```
 
+Test a file with a custom quantization:
 ```
-    $ lbg <file.table | file.acod> -d [options]
+    lbg-test <file> [FLAGS]
 ```
+    
   
 More options:
 
