@@ -22,14 +22,6 @@ _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
 
 
-def print(*args, end='\n'):
-    if not _options.verbose:
-        return
-    for c in args:
-        stdout.write(c)
-    stdout.write(end)
-
-
 class FileNotFound(Exception):
     """docstring for FileNotFound"""
 
