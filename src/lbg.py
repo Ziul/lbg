@@ -16,10 +16,31 @@ import itertools
 import cv2
 from codebooks import generate_codebook as compute
 from codebooks import avg_distortion_c0 as avg_distortion
+from mathematical import distortion, img_rate
 
 _MAX_THREADS = 10
 _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
+
+
+def print(*args, end='\n'):
+    if not _options.verbose:
+        return
+    for c in args:
+        stdout.write(str(c))
+    stdout.write(end)
+
+
+def axis_distortio(I1):
+    levels = [5, 10, 30, 50, 70, 100, 120, 150, 200, 250]
+    R = []
+    D = []
+    for lv in levels:
+        I2 = I1.compress(tax=lv)
+        D.append(distortion(I1.figure, I2))
+        R.append(img_rate(lv, I2.size / lv))
+        I1.codebooks = []
+    return D, R
 
 
 class FileNotFound(Exception):
@@ -51,10 +72,7 @@ class LBG(object):
     @staticmethod
     def centroids(data):
         """ Return the centroid of a conjunt of vectors."""
-        out = []
-        for i in data:
-            out.append(i.mean(axis=0))
-        return np.array(out)
+        return np.array([np.mean(i) for i in data])
 
     @staticmethod
     def avg(data):
@@ -91,12 +109,12 @@ class LBG(object):
     def convulate(self, value):
         return LBG.external_convulate(self.figure, self.codebooks)
 
-    def compress(self):
+    def compress(self, tax=10):
         if len(self.codebooks) == 0:
-            self.generate_centroids(_options.compress)
+            self.generate_centroids(tax)
         return LBG.external_compress(self.figure, self.codebooks)
 
-    def is_avg_equal(self, old, new):
+    def is_max_equal(self, old, new):
         try:
             if old.shape != new.shape:
                 return False
@@ -115,7 +133,7 @@ class LBG(object):
         values = np.array(np.array_split(values, tax))
         old = np.zeros(unique_size)
         centroids = np.array([np.mean(i) for i in values])
-        while self.is_avg_equal(old, centroids) > self.epsilon:
+        while self.is_max_equal(old, centroids) > self.epsilon:
             old = centroids.copy()
             values = np.array_split(np.concatenate(
                 values), np.mean(values, axis=1))
@@ -124,6 +142,34 @@ class LBG(object):
         print('{} >> {}'.format(unique_size, len(centroids)))
 
         return self.codebooks
+
+
+def show(figure, compressed_figure):
+    figure.windows.add_subplot(2, 2, 1)
+    plt.title('Original')
+    plt.imshow(figure.figure, cmap='Greys_r')
+    # plt.colorbar()
+    figure.windows.add_subplot(2, 2, 3)
+    plt.title('Histograma das imagens')
+    plt.hist(figure.figure.flatten(), bins=range(
+        0, 256, 5), label='Original')
+    plt.hist(compressed_figure.flatten(), bins=range(
+        0, 256, 5), label="Quantizada")
+    # plt.hist([figure.figure.flatten(), compressed_figure.flatten()],
+    #          bins=range(0, 255, 5))
+    plt.legend()
+    figure.windows.add_subplot(2, 2, 2)
+    plt.title('Quantizada [M={}]'.format(len(np.unique(compressed_figure))))
+    plt.imshow(compressed_figure, cmap='Greys_r')
+    # plt.colorbar()
+    figure.windows.add_subplot(2, 2, 4)
+    # plt.title('Histograma da quantizada')
+    plt.title('Distorção x Taxa')
+    D, R = axis_distortio(figure)
+    plt.xlabel('Distorção')
+    plt.ylabel('Taxa')
+    plt.plot(D, R)
+    plt.show()
 
 
 def main():
@@ -137,26 +183,11 @@ def main():
         raise ValueError('Compress tax not informed')
 
     figure = LBG(_options.filename)
-    compressed_figure = figure.compress()
+    compressed_figure = figure.compress(_options.compress)
 
+    # with plt.style.context(('seaborn-pastel')):
     with plt.xkcd():
-        # with plt.style.context(('seaborn-pastel')):
-        figure.windows.add_subplot(2, 2, 1)
-        plt.title('Original')
-        plt.imshow(figure.figure, cmap='Greys_r')
-        # plt.colorbar()
-        figure.windows.add_subplot(2, 2, 3)
-        plt.title('Histograma da original')
-        plt.hist(figure.figure.flatten(), bins=range(0, 255, 5))
-        figure.windows.add_subplot(2, 2, 2)
-        plt.title('Quantizada')
-        plt.imshow(compressed_figure, cmap='Greys_r')
-        # plt.colorbar()
-        figure.windows.add_subplot(2, 2, 4)
-        plt.title('Histograma da quantizada')
-        plt.hist(compressed_figure.flatten(), bins=range(
-            0, np.max(compressed_figure) + 10, 5))
-        plt.show()
+        show(figure, compressed_figure)
 
 
 def learn():
@@ -184,7 +215,7 @@ def learn():
             figure = LBG(f)
             plt.close()
             try:
-                figure.compress()
+                figure.compress(_options.compress)
                 codebooks = (codebooks + figure.codebooks) / 2
             except ValueError:
                 pass
@@ -213,22 +244,8 @@ def apply_codebook():
 
     # with plt.xkcd():
     with plt.style.context(('seaborn-pastel')):
-        figure.windows.add_subplot(2, 2, 1)
-        plt.title('Original')
-        plt.imshow(figure.figure, cmap='Greys_r')
-        # plt.colorbar()
-        figure.windows.add_subplot(2, 2, 3)
-        plt.title('Histograma da original')
-        plt.hist(figure.figure.flatten(), bins=range(0, 255, 5))
-        figure.windows.add_subplot(2, 2, 2)
-        plt.title('Quantizada')
-        plt.imshow(compressed_figure, cmap='Greys_r')
-        # plt.colorbar()
-        figure.windows.add_subplot(2, 2, 4)
-        plt.title('Histograma da quantizada')
-        plt.hist(compressed_figure.flatten(), bins=range(
-            0, np.max(compressed_figure) + 10, 5))
-        plt.show()
+        show(figure, compressed_figure)
+
 
 if __name__ == '__main__':
     main()
