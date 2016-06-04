@@ -32,7 +32,7 @@ def print(*args, end='\n'):
 
 
 def axis_distortio(I1):
-    levels = [5, 10, 30, 50, 70, 100, 120, 150, 200, 250]
+    levels = [2, 5, 10, 30, 50, 70, 100, 120, 150, 200, 250]
     R = []
     D = []
     for lv in levels:
@@ -146,15 +146,15 @@ class LBG(object):
 
 def show(figure, compressed_figure):
     figure.windows.add_subplot(2, 2, 1)
-    plt.title('Original')
+    plt.title('Original [M={}]'.format(len(np.unique(figure.figure))))
     plt.imshow(figure.figure, cmap='Greys_r')
     # plt.colorbar()
     figure.windows.add_subplot(2, 2, 3)
     plt.title('Histograma das imagens')
-    plt.hist(figure.figure.flatten(), bins=range(
-        0, 256, 5), label='Original')
     plt.hist(compressed_figure.flatten(), bins=range(
         0, 256, 5), label="Quantizada")
+    plt.hist(figure.figure.flatten(), bins=range(
+        0, 256, 5), label='Original')
     # plt.hist([figure.figure.flatten(), compressed_figure.flatten()],
     #          bins=range(0, 255, 5))
     plt.legend()
@@ -163,12 +163,18 @@ def show(figure, compressed_figure):
     plt.imshow(compressed_figure, cmap='Greys_r')
     # plt.colorbar()
     figure.windows.add_subplot(2, 2, 4)
-    # plt.title('Histograma da quantizada')
-    plt.title('Distorção x Taxa')
+    plt.title('Histograma da quantizada')
+    plt.title('Desigualdade x Taxa')
     D, R = axis_distortio(figure)
-    plt.xlabel('Distorção')
+    plt.xlabel('Desigualdade')
     plt.ylabel('Taxa')
     plt.plot(D, R)
+    levels = [2, 5, 10, 30, 50, 70, 100, 120, 150, 200, 250]
+    for d, r, lv in zip(D, R, levels):
+        plt.text(d, r, str(lv))
+    # name = _options.filename.split('.')
+    # name = name[:-1] + ['_compressed'] + name[-1:]
+    # cv2.imwrite('.'.join(name), compressed_figure)
     plt.show()
 
 
