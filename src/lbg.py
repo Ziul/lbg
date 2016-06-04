@@ -1,6 +1,4 @@
-from __future__ import print_function
 from lbgargs import _parser
-from pprint import pprint
 from sys import argv, stdout
 from glob import glob
 import os
@@ -17,13 +15,15 @@ import cv2
 from codebooks import generate_codebook as compute
 from codebooks import avg_distortion_c0 as avg_distortion
 from mathematical import distortion, img_rate
+from pkg_resources import resource_filename
+
 
 _MAX_THREADS = 10
 _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
 
 
-def print(*args, end='\n'):
+def qprint(*args, end='\n'):
     if not _options.verbose:
         return
     for c in args:
@@ -139,7 +139,7 @@ class LBG(object):
                 values), np.mean(values, axis=1))
             centroids = np.array([np.mean(i) for i in values])
         self.codebooks = np.round(centroids)
-        print('{} >> {}'.format(unique_size, len(centroids)))
+        qprint('{} >> {}'.format(unique_size, len(centroids)))
 
         return self.codebooks
 
@@ -183,7 +183,7 @@ def main():
         if _args:
             _options.filename = _args[0]
         else:
-            _parser.print_help()
+            _parser.qprint_help()
             return
     if not _options.compress:
         raise ValueError('Compress tax not informed')
@@ -201,21 +201,21 @@ def learn():
         if _args:
             _options.filename = _args[0]
         else:
-            _parser.print_help()
+            _parser.qprint_help()
             return
     if not os.path.isdir(_options.filename):
         raise Exception('Should pass a path with figures')
     try:
         LBG(_options.filename)
     except FileNotFound:
-        print('OK')
+        qprint('OK')
     files = []
     for extencion in ['*.png', '*.jpg', '*.jpeg', '*.tiff']:
         files += glob(_options.filename + '/**/' + extencion, recursive=True)
     codebooks = np.ones(_options.compress)
 
     for f in files:
-        print('\r{:.2f}% [{}] '.format(
+        qprint('\r{:.2f}% [{}] '.format(
             100. * (files.index(f) / len(files)), f), end='')
         try:
             figure = LBG(f)
@@ -228,11 +228,12 @@ def learn():
         except FileNotFound:
             pass
     codebooks = np.round(codebooks)
-    print('\r100.00% with {} images'.format(len(files)))
+    qprint('\r100.00% with {} images'.format(len(files)))
     plt.cla()
-    with open('codebook.lbg', 'w')as txtfile:
+    codebook_filename = resource_filename(__name__, 'codebook.lbg')
+    with open(codebook_filename, 'w')as txtfile:
         txtfile.write(json.dumps(list(codebooks), ensure_ascii=False))
-    print(codebooks)
+    qprint(codebooks)
 
 
 def apply_codebook():
@@ -240,9 +241,10 @@ def apply_codebook():
         if _args:
             _options.filename = _args[0]
         else:
-            _parser.print_help()
+            _parser.qprint_help()
             return
-    with open('codebook.lbg', 'r')as txtfile:
+    codebook_filename = resource_filename(__name__, 'codebook.lbg')
+    with open(codebook_filename, 'r')as txtfile:
         codebooks = json.load(txtfile)
 
     figure = LBG(_options.filename)

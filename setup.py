@@ -39,6 +39,7 @@ setup(
     test_suite="tests.run.runtests",
     install_requires=install_requires,
     include_package_data=True,
+    package_data={'': ['codebook.lbg']},
     classifiers=[
         'Environment :: Console',
         'Intended Audience :: Education',
