@@ -31,6 +31,14 @@ _parser.add_option("-f", "--filename",
                    help="Name of the file",
                    )
 
+
+_parser.add_option("-s", "--save",
+                   dest="save",
+                   action="store_true",
+                   help="save output",
+                   default=False
+                   )
+
 _parser.add_option("--error",
                    dest="error",
                    type='long',
