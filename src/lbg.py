@@ -22,10 +22,10 @@ from pkg_resources import resource_filename
 _MAX_THREADS = 10
 _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
+levels = np.arange(3, 150, 20)
 
 
 def axis_distortio(I1):
-    levels = [2, 5, 10, 30, 50, 70, 100, 120, 150, 200, 250]
     R = []
     D = []
     for lv in levels:
@@ -83,7 +83,7 @@ class LBG(object):
         return np.array(compute(rgb_spectrum, i)[0])
 
     @staticmethod
-    def external_convulate(figure, codebooks):
+    def external_fit(figure, codebooks):
         for i in range(len(codebooks) - 1):
             mask = np.ma.masked_inside(figure, codebooks[i], codebooks[i + 1])
             figure[mask.mask] = codebooks[i]
@@ -97,17 +97,20 @@ class LBG(object):
     @staticmethod
     def external_compress(figure, codebooks):
         new_figure = figure.copy()
-        return LBG.external_convulate(new_figure, codebooks)
+        return LBG.external_fit(new_figure, codebooks)
 
-    def convulate(self, value):
-        return LBG.external_convulate(self.figure, self.codebooks)
+    def fit(self, value):
+        return LBG.external_fit(self.figure, self.codebooks)
 
     def compress(self, tax=10):
+        if len(np.unique(self.figure)) <= tax:
+            return self.figure
         if len(self.codebooks) == 0:
             self.generate_centroids(tax)
         return LBG.external_compress(self.figure, self.codebooks)
 
-    def is_max_equal(self, old, new):
+    @staticmethod
+    def is_max_equal(old, new):
         try:
             if old.shape != new.shape:
                 return False
@@ -115,6 +118,27 @@ class LBG(object):
             return False
 
         return np.abs(new - old).max()
+
+    @staticmethod
+    def external_generate_centroids(values, tax=10):
+        values = values.flatten()
+        values.sort()
+        unique_size = len(np.unique(values))
+        if tax < 1:
+            tax = np.ceil(tax * unique_size)
+
+        values = np.array(np.array_split(values, tax))
+        old = np.zeros(unique_size)
+        centroids = np.array([np.mean(i) for i in values])
+        while LBG.is_max_equal(old, centroids) > _options.error:
+            old = centroids.copy()
+            values = np.array_split(np.concatenate(
+                values), np.mean(values, axis=1))
+            centroids = np.array([np.mean(i) for i in values])
+        codebooks = np.round(centroids)
+        qprint('{} >> {}'.format(unique_size, len(centroids)))
+
+        return codebooks
 
     def generate_centroids(self, tax=10):
         values = np.concatenate(self.figure.copy())
@@ -126,7 +150,7 @@ class LBG(object):
         values = np.array(np.array_split(values, tax))
         old = np.zeros(unique_size)
         centroids = np.array([np.mean(i) for i in values])
-        while self.is_max_equal(old, centroids) > self.epsilon:
+        while LBG.is_max_equal(old, centroids) > self.epsilon:
             old = centroids.copy()
             values = np.array_split(np.concatenate(
                 values), np.mean(values, axis=1))
@@ -142,19 +166,20 @@ def show(figure, compressed_figure):
     plt.title('Original [M={}]'.format(len(np.unique(figure.figure))))
     plt.imshow(figure.figure, cmap='Greys_r')
     # plt.colorbar()
+
     figure.windows.add_subplot(2, 2, 3)
     plt.title('Histograma das imagens')
     plt.hist(compressed_figure.flatten(), bins=range(
-        0, 256, 5), label="Quantizada")
+        0, 256, 3), label="Quantizada")
     plt.hist(figure.figure.flatten(), bins=range(
-        0, 256, 5), label='Original')
-    # plt.hist([figure.figure.flatten(), compressed_figure.flatten()],
-    #          bins=range(0, 255, 5))
+        0, 256, 1), label='Original')
     plt.legend()
+
     figure.windows.add_subplot(2, 2, 2)
     plt.title('Quantizada [M={}]'.format(len(np.unique(compressed_figure))))
     plt.imshow(compressed_figure, cmap='Greys_r')
     # plt.colorbar()
+
     figure.windows.add_subplot(2, 2, 4)
     plt.title('Histograma da quantizada')
     plt.title('Desigualdade x Taxa')
@@ -162,7 +187,6 @@ def show(figure, compressed_figure):
     plt.xlabel('Desigualdade')
     plt.ylabel('Taxa')
     plt.plot(D, R)
-    levels = [2, 5, 10, 30, 50, 70, 100, 120, 150, 200, 250]
     for d, r, lv in zip(D, R, levels):
         plt.text(d, r, str(lv))
     if _options.save:
