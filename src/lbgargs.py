@@ -42,7 +42,7 @@ _parser.add_option("-s", "--save",
 _parser.add_option("--error",
                    dest="error",
                    type='long',
-                   default=1e-5,
+                   default=1e-3,
                    help="Error",
                    )
 

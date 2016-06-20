@@ -65,9 +65,24 @@ class LBG(object):
         return np.array([np.mean(i) for i in data])
 
     @staticmethod
+    def v_centroids(data):
+        """ Return the centroid of a conjunt of vectors."""
+        return np.array(np.mean(np.mean(data, axis=0), axis=0))
+
+    @staticmethod
     def avg(data):
         """ Return the avg of a conjunt of vectors."""
         return np.mean(data, axis=1)
+
+    @staticmethod
+    def norm(V1):
+        """ Return the euclidian distance of two vectors n-size."""
+        return np.linalg.norm(V1)
+
+    @staticmethod
+    def euclid(V1, V2):
+        """ Return the euclidian distance of two vectors n-size."""
+        return np.linalg.norm(V1, V2)
 
     @staticmethod
     def chunks(l, n):
