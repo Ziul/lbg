@@ -52,3 +52,10 @@ _parser.add_option("-c", "--compress",
                    default=10,
                    help="Compress value",
                    )
+
+_parser.add_option("--fast",
+                   dest="fast",
+                   action="store_true",
+                   help="suppress RxD plot",
+                   default=False
+                   )

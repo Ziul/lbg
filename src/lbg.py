@@ -17,18 +17,20 @@ from pkg_resources import resource_filename
 _MAX_THREADS = 10
 _pool = ThreadPool(processes=_MAX_THREADS)
 (_options, _args) = _parser.parse_args()
-levels = np.arange(3, 150, 20)
+levels = np.arange(10, 250, 30)
 
 
 def axis_distortio(I1):
     R = []
     D = []
+    U = []
     for lv in levels:
         I2 = I1.compress(tax=lv)
+        U.append(len(np.unique(I2)))
         D.append(distortion(I1.figure, I2))
         R.append(img_rate(lv, I2.size / lv))
         I1.codebooks = []
-    return D, R
+    return D, R, U
 
 
 class FileNotFound(Exception):
@@ -168,6 +170,7 @@ def show(figure, compressed_figure):
         0, 256, 3), label="Quantizada")
     plt.hist(figure.figure.flatten(), bins=range(
         0, 256, 1), label='Original')
+    plt .yscale('log')
     plt.legend()
 
     figure.windows.add_subplot(2, 2, 2)
@@ -175,19 +178,20 @@ def show(figure, compressed_figure):
     plt.imshow(compressed_figure, cmap='Greys_r')
     # plt.colorbar()
 
-    figure.windows.add_subplot(2, 2, 4)
-    plt.title('Histograma da quantizada')
-    plt.title('Desigualdade x Taxa')
-    D, R = axis_distortio(figure)
-    plt.xlabel('Desigualdade')
-    plt.ylabel('Taxa')
-    plt.plot(D, R)
-    for d, r, lv in zip(D, R, levels):
-        plt.text(d, r, str(lv))
-    if _options.save:
-        name = _options.filename.split('.')
-        name = name[:-1] + ['_compressed'] + name[-1:]
-        cv2.imwrite('.'.join(name), compressed_figure)
+    if not _options.fast:
+        figure.windows.add_subplot(2, 2, 4)
+        plt.title('Histograma da quantizada')
+        plt.title('Desigualdade x Taxa')
+        D, R, U = axis_distortio(figure)
+        plt.xlabel('Desigualdade')
+        plt.ylabel('Taxa')
+        plt.plot(D, R)
+        for d, r, lv, u in zip(D, R, levels, U):
+            plt.text(d, r, "{}[{}]".format(lv, u))
+        if _options.save:
+            name = _options.filename.split('.')
+            name = name[:-1] + ['_compressed'] + name[-1:]
+            cv2.imwrite('.'.join(name), compressed_figure)
     plt.show()
 
 
@@ -204,8 +208,8 @@ def main():
     figure = LBG(_options.filename)
     compressed_figure = figure.compress(_options.compress)
 
-    # with plt.style.context(('seaborn-pastel')):
-    with plt.xkcd():
+    with plt.style.context(('seaborn-pastel')):
+        # with plt.xkcd():
         show(figure, compressed_figure)
 
 
@@ -256,6 +260,9 @@ def apply_codebook():
         else:
             _parser.print_help()
             return
+    if _options.compress != 10:
+        print("Deprecated")
+
     codebook_filename = resource_filename(__name__, 'codebook.lbg')
     with open(codebook_filename, 'r')as txtfile:
         codebooks = json.load(txtfile)
