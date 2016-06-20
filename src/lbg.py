@@ -133,7 +133,9 @@ class LBG(object):
                 values), np.mean(values, axis=1))
             centroids = np.array([np.mean(i) for i in values])
         codebooks = np.round(centroids)
-        print('{} >> {}'.format(unique_size, len(centroids)))
+        print('{} >> {} -> {}[{}]'.format(
+            unique_size, tax, len(np.unique(centroids)),
+            len(np.unique(codebooks))))
 
         return codebooks
 
@@ -152,8 +154,11 @@ class LBG(object):
             values = np.array_split(np.concatenate(
                 values), np.mean(values, axis=1))
             centroids = np.array([np.mean(i) for i in values])
+        # A lot of centroids vanishes here
         self.codebooks = np.round(centroids)
-        print('{} >> {}'.format(unique_size, len(centroids)))
+        print('{} >> {} -> {}[{}]'.format(
+            unique_size, tax, len(np.unique(centroids)),
+            len(np.unique(self.codebooks))))
 
         return self.codebooks
 
@@ -170,7 +175,8 @@ def show(figure, compressed_figure):
         0, 256, 3), label="Quantizada")
     plt.hist(figure.figure.flatten(), bins=range(
         0, 256, 1), label='Original')
-    plt .yscale('log')
+    if _options.log:
+        plt .yscale('log')
     plt.legend()
 
     figure.windows.add_subplot(2, 2, 2)

@@ -59,3 +59,10 @@ _parser.add_option("--fast",
                    help="suppress RxD plot",
                    default=False
                    )
+
+_parser.add_option("--no-log",
+                   dest="log",
+                   action="store_false",
+                   help="suppress RxD plot",
+                   default=True
+                   )
