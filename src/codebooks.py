@@ -52,12 +52,14 @@ def generate_codebook(data, size_codebook, epsilon=0.01):
 
 def split_codebook(data, codebook, epsilon, initial_avg_dist):
     """
-    Split the codebook so that each codevector in the codebook is split into two.
+    Split the codebook so that each codevector in the codebook is split
+        into two.
     :param data: input data
     :param codebook: input codebook. its codevectors will be split into two.
     :param epsilon: convergence value
     :param initial_avg_dist: initial average distortion
-    :return Tuple with new codebook, codebook absolute weights and codebook relative weights
+    :return Tuple with new codebook, codebook absolute weights and codebook
+        relative weights
     """
 
     # split codevectors
@@ -76,8 +78,9 @@ def split_codebook(data, codebook, epsilon, initial_avg_dist):
 
     # print('> splitting to size', len_codebook)
 
-    # try to reach a convergence by minimizing the average distortion. this is done by moving the codevectors step by
-    # step to the center of the points in their proximity
+    # try to reach a convergence by minimizing the average distortion. this is
+    # done by moving the codevectors step by step to the center of the points
+    # in their proximity
     avg_dist = 0
     err = epsilon + 1
     num_iter = 0
@@ -95,7 +98,8 @@ def split_codebook(data, codebook, epsilon, initial_avg_dist):
             closest_c_index = None
             for i_c, c in enumerate(codebook):  # for each codevector
                 d = euclid_squared(vec, c)
-                if min_dist is None or d < min_dist:    # found new closest codevector
+                # found new closest codevector
+                if min_dist is None or d < min_dist:
                     min_dist = d
                     closest_c_list[i] = c
                     closest_c_index = i_c
@@ -127,7 +131,8 @@ def split_codebook(data, codebook, epsilon, initial_avg_dist):
         # recalculate the new error value
         err = (prev_avg_dist - avg_dist) / prev_avg_dist
         # print(closest_c_list)
-        # print('> iteration', num_iter, 'avg_dist', avg_dist, 'prev_avg_dist', prev_avg_dist, 'err', err)
+        # print('> iteration', num_iter, 'avg_dist', avg_dist, 'prev_avg_dist',
+        # prev_avg_dist, 'err', err)
 
         num_iter += 1
 
@@ -164,14 +169,15 @@ def new_codevector(c, e):
 
 def avg_distortion_c0(c0, data, size=None):
     """
-    Average distortion of <c0> in relation to <data> (i.e. how good does <c0> describe <data>?).
+    Average distortion of <c0> in relation to <data> (i.e. how good does <c0>
+        describe <data>?).
     :param c0: comparison vector
     :param data: sample data
     :param size: size of <data> if it was already calculated
     :return average distortion
     """
     size = size or _size_data
-    return reduce(lambda s, d:  s + d / size,
+    return reduce(lambda s, d: s + d / size,
                   (euclid_squared(c0, vec)
                    for vec in data),
                   0.0)
@@ -179,15 +185,15 @@ def avg_distortion_c0(c0, data, size=None):
 
 def avg_distortion_c_list(c_list, data, size=None):
     """
-    Average distortion between input samples <data> and a list <c_list> that contains a codevector for each point in
-    <data>.
+    Average distortion between input samples <data> and a list <c_list> that
+        contains a codevector for each point in <data>.
     :param c_list: list that contains a codevector for each point in <data>
     :param data: input samples
     :param size: Size of <data> if it was already calculated
     :return:
     """
     size = size or _size_data
-    return reduce(lambda s, d:  s + d / size,
+    return reduce(lambda s, d: s + d / size,
                   (euclid_squared(c_i, data[i])
                    for i, c_i in enumerate(c_list)),
                   0.0)

@@ -1,20 +1,15 @@
 from __future__ import print_function
 from lbgargs import _parser
-from sys import argv, stdout
 from glob import glob
 import os
-import sys
-import fnmatch
 import json
 
 from multiprocessing.pool import ThreadPool
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import numpy as np
 import itertools
 import cv2
 from codebooks import generate_codebook as compute
-from codebooks import avg_distortion_c0 as avg_distortion
 from mathematical import distortion, img_rate
 from pkg_resources import resource_filename
 
@@ -136,7 +131,7 @@ class LBG(object):
                 values), np.mean(values, axis=1))
             centroids = np.array([np.mean(i) for i in values])
         codebooks = np.round(centroids)
-        qprint('{} >> {}'.format(unique_size, len(centroids)))
+        print('{} >> {}'.format(unique_size, len(centroids)))
 
         return codebooks
 
